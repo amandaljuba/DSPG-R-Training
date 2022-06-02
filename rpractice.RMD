@@ -85,5 +85,151 @@ cats <- na.omit(cats)
 cats <- cats[,-4]
 drop <- names(cats) %in% c("weight")
 cats[,!drop]
-#to remove a column, place a negative before the x value. to remove a row, place a negative infront of the y value
+#to remove a column, place a negative before the x value. to remove a row, place a negative in front of the y value
+#command option i puts in code chunk for markdown 
 ```
+
+```{r}
+library(readxl)
+gapminder <- read_excel("data/gapminder_data.xlsx")
+```
+
+Inspecting a data frame
+```{r}
+summary(gapminder)
+summary(gapminder$lifeExp)
+gapminder$country <- factor(gapminder$country)
+gapminder$continent <- factor(gapminder$continent)
+summary(gapminder)
+length(gapminder)
+nrow(gapminder)
+colnames(gapminder)
+head(gapminder)
+tail(gapminder)
+gapminder[sample(nrow(gapminder),10),]
+gapminder[1:10,2:5]
+```
+
+Sub-setting Data
+
+```{r}
+x <- c(5.4,6.2,4.8,7.5)
+names(x) <- c('a','b','c','d')
+x[c(1,3)] #discrete items
+x[1:3] #slice
+x[c(1,1,3)] #1 repeats
+x[-2] #remove the second element
+x[c(-1,-5)] #removing multiple elements 
+x[-(1:3)] #removes elements 1 through 3
+x <- x[-3] #removes the third element for good 
+x <- c(5.4,6.2,4.8,7.5)
+names(x) <- c('a','b','c','d')
+x[x>7] #will only show the values greater than 7 - square braces act as the word "where"
+x[x>7&x<7.5] #& or | (or)
+names(x) != c("a","c")
+x[!names(x)%in%c("a","c")]
+```
+
+select southeast asian countries from gapminder gapminder[which(gapminder$country%in%seAsia),]
+
+```{r}
+seAsia <- c("Myanmar","Thailand","Cambodia","Vietnam")
+gapminder[gapminder$country%in%seAsia,]
+seAsiagap <- gapminder[gapminder$country%in%seAsia,]
+summary(seAsiagap)
+```
+
+Extract observations from 1957 in gapminder
+
+```{r}
+gap_57 <- gapminder[gapminder$year==1957,]
+```
+
+Extract observations from the 1960s in gapminder
+
+```{r}
+gap_60s <- gapminder[gapminder$year==1962|gapminder$year==1967,]
+```
+
+Pictures!
+
+```{r}
+library(ggplot2)
+ggplot(data=gapminder,mapping=aes(x=gdpPercap,y=lifeExp)) + geom_point()
+```
+
+```{r}
+#this creates axis but not figure
+ggplot(data=gapminder,mapping=aes(x=gdpPercap,y=lifeExp)) 
+#geom_point adds in the points
+ggplot(data=gapminder,mapping=aes(x=year,y=lifeExp)) + geom_point()
+```
+
+
+Lines!
+
+```{r}
+ggplot(data=gapminder,mapping=aes(x=year, y=lifeExp, color=continent)) +geom_line()
+```
+
+Lines that make sense!
+
+```{r}
+ggplot(data=gapminder,mapping=aes(x=year, y=lifeExp, by=country)) +geom_line(mapping=aes(color=continent)) +geom_point(color="yellow")
+```
+
+```{r}
+logged_ggplot <- ggplot(gapminder,mapping=aes(x=gdpPercap,y=lifeExp)) +geom_point()+scale_x_log10()
+logged_ggplot+geom_smooth(method=loess)
+```
+
+subsetting again
+
+```{r}
+americas <- gapminder[gapminder$continent=="Americas",]
+ggplot(data=americas,mapping=aes(x=year,y=lifeExp))+geom_line()+facet_wrap(~country)+theme(axis.text.x=element_text(angle=45))
+ggsave(filename='results/lifeExp_americas.png')
+```
+
+Save Americas! writing out the data 
+```{r}
+write.csv(file="clean data/americas_gap.csv",x=americas,row.names=F)
+```
+
+tidyverse and dplyr!
+
+```{r}
+#this does not work
+#mean(gapminder[gapminder$continent=="Africa","gdpPercap"])
+```
+
+```{r}
+library(dplyr)
+year_country_gdp <- select(gapminder,year,country,gdpPercap)
+str(year_country_gdp)
+smaller_gap <- gapminder %>%select(-continent) %>% rename(gdp_per_capita=gdpPercap) #%>% this is a pipe 
+smaller_gap
+```
+
+```{r}
+y_cntr_gdp_eur <- gapminder%>% filter(continent=="Europe")%>%select(year,country,gdpPercap)
+```
+
+Combine with grouping!
+
+```{r}
+gapminder%>%group_by(continent,year) %>% summarize(mean_gdpPercap=mean(gdpPercap))
+```
+
+Mutate! creating new variables that draw on multiple variables
+
+```{r}
+gapminder %>% mutate(gdp_billion = gdpPercap*pop/10^9)%>%group_by(continent) %>% summarize(mean_gdp_bill = mean(gdp_billion))
+```
+
+combining dyplyer with ggplot %>% shortcut is command shift m
+
+```{r}
+gapminder %>% filter(continent=="Americas") %>% ggplot(mapping=aes(x=year,y=lifeExp))+geom_line()+facet_wrap(~country) 
+```
+
